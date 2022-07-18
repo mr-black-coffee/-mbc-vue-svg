@@ -13,7 +13,7 @@ if (typeof window !== 'undefined' && window.Vue) {
 export { VueSvg }
 
 export default {
-  version: '0.1.6',
+  version: '0.1.7',
   install,
   VueSvg,
   vueSvg: VueSvg
