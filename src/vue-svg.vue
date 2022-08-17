@@ -4,7 +4,18 @@
 
 <script>
 import { createSvg, SvgTextMonitor, CountTo } from 'better-svg'
+
+async function updateDomOpacity(dom, duration = 50, val = 1) {
+    return new Promise(resolve => {
+        dom.style.opacity = val
+        setTimeout(() => {
+            resolve()
+        }, duration)
+    })
+}
+
 export default {
+    name: 'VueSvg',
     props: {
         // svg文件地址，请传入已解析过的绝对地址，如dev或production环境中的地址
         src: {
@@ -81,6 +92,10 @@ export default {
         id: {
             type: String,
             default: ''
+        },
+        debug: {
+            type: Boolean,
+            default: true
         }
     },
     data() {
@@ -115,21 +130,27 @@ export default {
         value: {
             deep: true,
             handler() {
-               this.inited && this.updateValue()
+                this.inited && this.updateValue()
             }
         },
-        percentAnimations: {
+        // percentAnimations: {
+        //     deep: true,
+        //     handler() {
+        //         this.inited && this.updatePercentAnimations()
+        //     }
+        // },
+        // percentChildren: {
+        //     deep: true,
+        //     handler() {
+        //         this.inited && this.updatePercentChildren()
+        //     }
+        // },
+        countTo: {
             deep: true,
             handler() {
-                this.inited && this.updatePercentAnimations()
+                this.inited && this.initCountTo()
             }
-        },
-        percentChildren: {
-            deep: true,
-            handler() {
-                this.inited && this.updatePercentChildren()
-            }
-        },
+        }
     },
     mounted() {
         this.init()
@@ -140,8 +161,8 @@ export default {
             if (!this.content && !this.src) {
                 return
             }
-            let url = _this.src
-            let svgContent = _this.content || await loadSvg(url)
+            let url = this.src
+            let svgContent = this.content || await this.fileLoader(url)
             if (svgContent) {
                 svgContent = svgContent.replace(/\n/g, '').replace(/^(.*)(<svg.*)/i, '$2')
                 _this.svgDom = createSvg(svgContent)
@@ -169,7 +190,7 @@ export default {
                 _this.$refs.svgContainer.appendChild(img)
             }
         },
-
+        
         hideDom(svgDom, selector) {
             if (svgDom && selector) {
                 let nodeList = [...svgDom.querySelectorAll(selector)]
@@ -255,14 +276,13 @@ export default {
         },
 
         updatePercentChildren() {
-            let _this = this
-            if (_this.svgDom) {
-                _this.percentChildren.forEach(async (item) => {
-                    const {selector, value, duration = _this.duration} = item
+            if (this.svgDom) {
+                this.percentChildren.forEach(async (item) => {
+                    const {selector, value, duration = this.duration} = item
                     const per = value > 1
                         ? value / 100
                         : value
-                    const dom = _this.svgDom.querySelector(selector)
+                    const dom = this.svgDom.querySelector(selector)
                     if (dom) {
                         const max = dom.children.length
                         let steps = Math.floor(max * per)

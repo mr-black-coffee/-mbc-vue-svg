@@ -1535,10 +1535,10 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-better-svg@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.npmjs.org/better-svg/-/better-svg-0.1.1.tgz"
-  integrity sha512-VLkaqtFDEfuN7Zb8yTHsiwHPw71XDhiEl/DHQ6wJ+xE5G6K2gdFJqVQdBN/9M9z0sbrYuiTO2il3zOyTiHFn9g==
+better-svg@0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/better-svg/-/better-svg-0.1.6.tgz#3c70d7236cca8dcc104719f8254253fcd83fab26"
+  integrity sha512-nFN1yTzLKti25TL6iZ7lwA5rnUFEy+pQATj2EjbZUE8qI51+U0kqhdkuMZopaiO6sEXTi0BokQrBGFbm93GOtg==
   dependencies:
     "@babel/core" "^7.18.6"
     "@babel/plugin-transform-runtime" "^7.18.6"
