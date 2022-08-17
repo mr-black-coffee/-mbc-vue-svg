@@ -95,7 +95,7 @@ export default {
         },
         debug: {
             type: Boolean,
-            default: true
+            default: false
         }
     },
     data() {
@@ -157,6 +157,7 @@ export default {
     },
     methods: {
         async init() {
+            console.log('debug:', this.debug)
             let _this = this
             if (!this.content && !this.src) {
                 return
@@ -301,6 +302,7 @@ export default {
         },
 
         initCountTo() {
+            this.log('start initCountTo')
             if (this.countTo) {
                 const countToList = Array.isArray(this.countTo)
                     ? this.countTo
@@ -310,24 +312,34 @@ export default {
                     if (!c.duration) {
                         c.duration = this.duration
                     }
+                    this.log('added new countTo', c)
                     this.countToList.push(new CountTo(c, this.svgDom))
                 })
             }
         },
 
         startCountTo(index = -1) {
+            this.log('start counting', c)
             if (index > -1) {
                 const c = this?.countToList?.[index]
                 c && c.start()
             } else {
+                this.log('countToList', this.countToList)
                 this.countToList && this.countToList.forEach(c => c.start())
             }
         },
 
         start() {
+            this.log('exec start()...')
             this.startCountTo()
             this.updatePercentAnimations()
             this.updatePercentChildren()
+        },
+
+        log(title, msg) {
+            if (this.debug) {
+                console.log(`${this.id || 'unknown'} -- `, title, msg)
+            }
         }
     }
 }
