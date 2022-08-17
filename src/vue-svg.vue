@@ -319,7 +319,7 @@ export default {
         },
 
         startCountTo(index = -1) {
-            this.log('start counting', c)
+            this.log('start counting', this?.countToList)
             if (index > -1) {
                 const c = this?.countToList?.[index]
                 c && c.start()
