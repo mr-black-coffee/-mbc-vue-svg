@@ -157,7 +157,7 @@ export default {
     },
     methods: {
         async init() {
-            console.log('debug:', this.debug)
+            this.log('debug:', this.debug)
             let _this = this
             if (!this.content && !this.src) {
                 return
