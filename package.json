@@ -1,6 +1,6 @@
 {
   "name": "@vuecomp/vue-svg",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "A svg component for vue2.x",
   "keywords": [
     "svg",
@@ -32,7 +32,7 @@
     "babel": "^6.23.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^26.6.0",
-    "better-svg": "^0.1.7",
+    "better-svg": "^0.1.8",
     "cross-env": "^7.0.3",
     "css-loader": "^6.3.0",
     "style-loader": "^3.1.0",
