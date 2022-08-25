@@ -159,7 +159,7 @@ export default {
         classNames: {
             deep: true,
             handler(newList, oldList) {
-                this.updateClassNames(newList, oldList)
+                this.inited && this.updateClassNames(newList, oldList)
             }
         }
     },
@@ -188,6 +188,7 @@ export default {
                     _this.initTextMonitor()
                     _this.updateValue()
                     _this.initCountTo()
+                    _this.updateClassNames(_this.classNames)
                     this.parentNode.removeChild(this)
                     
                     setTimeout(() => {
@@ -276,25 +277,23 @@ export default {
                         // 增加
                         newList.forEach(item => {
                             nodeList.forEach(node => {
-                                if (!node.classList.contains(item)) {
-                                    node.classList.add(item)
+                                if (!node.classList.contains(value)) {
+                                    node.classList.add(value)
                                 }
                             })
                         })
                         // 删除
                         oldList.forEach(item => {
-                            if (!this.newList.includes(item)) {
+                            if (!this.newList.includes(value)) {
                                 nodeList.forEach(node => {
-                                    if (node.classList.contains(item)) {
-                                        node.classList.remove(item)
+                                    if (node.classList.contains(value)) {
+                                        node.classList.remove(value)
                                     }
                                 })
                             }
                         })
                     }
                 })
-                
-                
             }
         },
 
