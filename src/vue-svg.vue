@@ -67,6 +67,11 @@ export default {
             type: Array,
             default: () => []
         },
+        // 类名
+        classNames: {
+            type: Array,
+            default: () => []
+        },
         // 是否需要监控居中文本
         centerText:{
             type: Boolean,
@@ -149,6 +154,12 @@ export default {
             deep: true,
             handler() {
                 this.inited && this.initCountTo()
+            }
+        },
+        classNames: {
+            deep: true,
+            handler(newList, oldList) {
+                this.updateClassNames(newList, oldList)
             }
         }
     },
@@ -256,6 +267,37 @@ export default {
             }
         },
 
+        updateClassNames(newList = [], oldList = []) {
+            if (this.svgDom) {
+                this.classNames.forEach(classNameConfig => {
+                    const {selector, value} = classNameConfig
+                    const nodeList = this.svgDom.querySelectorAll(selector)
+                    if (nodeList.length) {
+                        // 增加
+                        newList.forEach(item => {
+                            nodeList.forEach(node => {
+                                if (!node.classList.contains(item)) {
+                                    node.classList.add(item)
+                                }
+                            })
+                        })
+                        // 删除
+                        oldList.forEach(item => {
+                            if (!this.newList.includes(item)) {
+                                nodeList.forEach(node => {
+                                    if (node.classList.contains(item)) {
+                                        node.classList.remove(item)
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+                
+                
+            }
+        },
+
         updatePercentAnimations() {
             if (this.svgDom) {
                 this.percentAnimations.forEach(item => {
@@ -300,6 +342,8 @@ export default {
                 })
             }
         },
+
+
 
         initCountTo() {
             this.log('start initCountTo')
