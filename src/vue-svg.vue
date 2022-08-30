@@ -180,7 +180,10 @@ export default {
                 _this.svgDom = createSvg(svgContent)
                 _this.beforeRender && _this.beforeRender(this.svgDom)
                 _this.centerText && _this.hideDom(_this.svgDom, _this.centerTextSelector)
-                
+                // 可能已销毁dom
+                if (!_this.$refs.svgContainer) {
+                    return
+                }
                 _this.$refs.svgContainer.appendChild(_this.svgDom)
                 let img = document.createElement('img')
                 img.src = ''
@@ -199,6 +202,9 @@ export default {
                         _this.inited = true
                         _this.$emit('inited')
                     }, 100)
+                }
+                if (!_this.$refs.svgContainer) {
+                    return
                 }
                 _this.$refs.svgContainer.appendChild(img)
             }
@@ -284,7 +290,7 @@ export default {
                         })
                         // 删除
                         oldList.forEach(item => {
-                            if (!this.newList.includes(value)) {
+                            if (this.newList && !this.newList.includes(value)) {
                                 nodeList.forEach(node => {
                                     if (node.classList.contains(value)) {
                                         node.classList.remove(value)
