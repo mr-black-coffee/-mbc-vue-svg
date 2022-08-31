@@ -72,6 +72,12 @@ export default {
             type: Array,
             default: () => []
         },
+        // 属性
+        // selector: 选择器, prop: 属性名, value: 属性值, type: 'delete'-删除，否则修改
+        attrs: {
+            type: Array,
+            default: () => []
+        },
         // 是否需要监控居中文本
         centerText:{
             type: Boolean,
@@ -160,6 +166,12 @@ export default {
             deep: true,
             handler(newList, oldList) {
                 this.inited && this.updateClassNames(newList, oldList)
+            }
+        },
+        attrs: {
+            deep: true,
+            handler() {
+                this.inited && this.updateAttrs()
             }
         }
     },
@@ -348,7 +360,30 @@ export default {
             }
         },
 
-
+        updateAttrs() {
+            if (this.svgDom) {
+                this.attrs.forEach(item => {
+                    const {selector, prop, value, type} = item
+                    const nodeList = this.svgDom.querySelectorAll(selector)
+                    const len = nodeList.length
+                    if (len === 0) {
+                        return
+                    } else {
+                        for (let i = 0; i < len; i++) {
+                            if (prop) {
+                                if (type === 'delete') {
+                                    // 删除
+                                    nodeList[i].removeAttribute(prop)
+                                } else {
+                                    // 修改
+                                    nodeList[i].setAttribute(prop, value)
+                                }
+                            }
+                        }
+                    }
+                })
+            }
+        },
 
         initCountTo() {
             this.log('start initCountTo')
