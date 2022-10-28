@@ -17,32 +17,58 @@ async function updateDomOpacity(dom, duration = 50, val = 1) {
 export default {
     name: 'VueSvg',
     props: {
-        // svg文件地址，请传入已解析过的绝对地址，如dev或production环境中的地址
+        /**
+         * svg文件地址，请传入已解析过的绝对地址，如dev或production环境中的地址
+         */
         src: {
             type: String,
             default: ''
         },
-        // 钩子函数，生成dom对象但还未渲染到页面时执行
+        /**
+         * 钩子函数，生成dom对象但还未渲染到页面时执行,会将svgDom和vue实例作为参数传入
+         */
         beforeRender: {
             type: Function,
             default: null
         },
-        // 宽度,px数值或百分比值字符串
+        /**
+         * 钩子函数，渲染元素渲染完成但尚未显示(透明状态)时执行，会将svgDom和vue实例作为参数传入
+         */
+        afterRender: {
+            type: Function,
+            default: null
+        },
+        /**
+         * 宽度,px数值或百分比值字符串
+         */
         width: {
-            type: Number|String,
-            default: 0
+            type: [Number, String],
+            default: '100%'
         },
-        // 高度,px数值或百分比值字符串
+        /**
+         * 高度,px数值或百分比值字符串
+         */
         height: {
-            type: Number|String,
-            default: 0
+            type: [Number, String],
+            default: '100%'
         },
-        // 已解析的svg文件的内容，如硬拷贝svg文件的内容
+        /**
+         * 已解析的svg文件的内容，如硬拷贝svg文件的内容
+         */
         content: {
             type: String,
             default: ''
         },
-        // 数组，每一项为selector选择器和要修改的value值，仅修改innerHTML值
+        /**
+         * 读取svg文件的方法，返回string类型的文件内容
+         */
+        fileLoader: {
+            type: Function,
+            default: async () => ''
+        },
+        /**
+         * 数组，每一项为selector选择器和要修改的value值，仅修改innerHTML值
+         */
         value: {
             type: Array,
             default: () => [
@@ -52,58 +78,80 @@ export default {
                 // }
             ]
         },
-        // 读取svg文件的方法，返回string类型的文件内容
-        fileLoader: {
-            type: Function,
-            default: async () => ''
-        },
-        // 百分比动画集合
+        /**
+         * 百分比动画集合
+         */
         percentAnimations: {
             type: Array,
             default: () => []
         },
-        // 按子元素个数实现百分比动画的集合
+        /**
+         * 按子元素个数实现百分比动画的集合
+         */
         percentChildren: {
             type: Array,
             default: () => []
         },
-        // 类名
+        /**
+         * 类名
+         */
         classNames: {
             type: Array,
             default: () => []
         },
-        // 属性
-        // selector: 选择器, prop: 属性名, value: 属性值, type: 'delete'-删除，否则修改
-        attrs: {
+        /**
+         * 要修改的属性列表
+         * @values   
+         */
+        attrList: {
             type: Array,
             default: () => []
         },
-        // 是否需要监控居中文本
+        /**
+         * 是否需要监控居中文本
+         */
         centerText:{
             type: Boolean,
             default: true
         },
-        // svg中需要设置为居中的选择器
+        /**
+         * svg中需要设置为居中的选择器
+         */
         centerTextSelector: {
             type: String,
             default: '.text-m'
         },
+        /**
+         * 翻牌效果
+         */
         countTo: {
-            type: Array | Object,
+            type: [Array, Object],
             default: null
         },
+        /**
+         * 动画时长
+         */
         duration: {
             type: Number,
             default: 3000
         },
+        /**
+         * 是否自动播放
+         */
         autoPlay: {
             type: Boolean,
             default: false
         },
+        /**
+         * id标记，可用于log显示
+         */
         id: {
             type: String,
             default: ''
         },
+        /**
+         * 是否是debug模式，是则打印信息
+         */
         debug: {
             type: Boolean,
             default: false
@@ -168,7 +216,7 @@ export default {
                 this.inited && this.updateClassNames(newList, oldList)
             }
         },
-        attrs: {
+        attrList: {
             deep: true,
             handler() {
                 this.inited && this.updateAttrs()
@@ -179,6 +227,9 @@ export default {
         this.init()
     },
     methods: {
+        /**
+         *  初始化
+         */
         async init() {
             this.log('debug:', this.debug)
             let _this = this
@@ -190,7 +241,7 @@ export default {
             if (svgContent) {
                 svgContent = svgContent.replace(/\n/g, '').replace(/^(.*)(<svg.*)/i, '$2')
                 _this.svgDom = createSvg(svgContent)
-                _this.beforeRender && _this.beforeRender(this.svgDom)
+                _this.beforeRender && _this.beforeRender(_this.svgDom, _this)
                 _this.centerText && _this.hideDom(_this.svgDom, _this.centerTextSelector)
                 // 可能已销毁dom
                 if (!_this.$refs.svgContainer) {
@@ -204,8 +255,11 @@ export default {
                     _this.updateValue()
                     _this.initCountTo()
                     _this.updateClassNames(_this.classNames)
+                    _this.updateAttrs()
                     this.parentNode.removeChild(this)
-                    
+                    if (_this.afterRender) {
+                        _this.afterRender(svgDom, _this)
+                    }
                     setTimeout(() => {
                         _this.resumeDom(_this.svgDom, _this.centerTextSelector)
                         if (_this.autoPlay) {
@@ -222,6 +276,11 @@ export default {
             }
         },
         
+        /**
+         *  隐藏dom
+         * @param {SVGElement} svgDom svg元素Dom
+         * @param {string} selector css选择器
+         */
         hideDom(svgDom, selector) {
             if (svgDom && selector) {
                 let nodeList = [...svgDom.querySelectorAll(selector)]
@@ -235,6 +294,11 @@ export default {
             }
         },
 
+        /**
+         *  恢复dom可见
+         * @param {SVGElement} svgDom svg元素Dom
+         * @param {string} selector css选择器
+         */
         resumeDom(svgDom, selector) {
             if (svgDom && selector) {
                 let nodeList = [...svgDom.querySelectorAll(selector)]
@@ -250,6 +314,9 @@ export default {
             }
         },
 
+        /**
+         *  初始化需要居中的文本元素
+         */
         initTextMonitor() {
             if (this.centerText) {
                 this.textMonitor = new SvgTextMonitor({
@@ -259,7 +326,10 @@ export default {
             }
             this.inited = true
         },
-
+        
+        /**
+         *  更新元素值
+         */
         updateValue() {
             if (this.svgDom) {
                 this.value.forEach(item => {
@@ -286,6 +356,11 @@ export default {
             }
         },
 
+        /**
+         *  更新样式类
+         * @param {array} newList 新样式列表
+         * @param {array} oldList 旧样式列表
+         */
         updateClassNames(newList = [], oldList = []) {
             if (this.svgDom) {
                 this.classNames.forEach(classNameConfig => {
@@ -315,10 +390,15 @@ export default {
             }
         },
 
+
+        /**
+         *  按照百分比步进更新animate元素动画(from, to)，如果to是 `percent  total`方式，则修改percent值 
+         * 如果是`end`方式，则修改的是end值
+         */
         updatePercentAnimations() {
             if (this.svgDom) {
                 this.percentAnimations.forEach(item => {
-                    const {selector, value} = item
+                    const {selector, value, duration} = item
                     const per = value > 1
                         ? value / 100
                         : value
@@ -326,15 +406,22 @@ export default {
                     if (dom) {
                         const to = dom.getAttribute('to')
                         const toArr = to.split(/\s+/)
-                        if (toArr && toArr.length > 1) {
-                            const val = Math.round(per * toArr[1])
-                            dom.setAttribute('to', `${val} ${toArr[1]}`)
+                        if (toArr) {
+                            if (toArr.length === 0) {
+                                dom.setAttribute('to', `${val}`)
+                            } else {
+                                const val = Math.round(per * toArr[1])
+                                dom.setAttribute('to', `${val} ${toArr[1]}`)
+                            }
                         }
                     }
                 })
             }
         },
 
+        /**
+         *  按照百分比步进更新指定元素的指定元素opacity属性
+         */
         updatePercentChildren() {
             if (this.svgDom) {
                 this.percentChildren.forEach(async (item) => {
@@ -360,9 +447,12 @@ export default {
             }
         },
 
+        /**
+         *  修改元素属性值
+         */
         updateAttrs() {
             if (this.svgDom) {
-                this.attrs.forEach(item => {
+                this.attrList.forEach(item => {
                     const {selector, prop, value, type} = item
                     const nodeList = this.svgDom.querySelectorAll(selector)
                     const len = nodeList.length
@@ -385,6 +475,9 @@ export default {
             }
         },
 
+        /**
+         *  初始化翻牌效果
+         */
         initCountTo() {
             this.log('start initCountTo')
             if (this.countTo) {
@@ -402,6 +495,9 @@ export default {
             }
         },
 
+        /**
+         *  开始翻牌效果
+         */
         startCountTo(index = -1) {
             this.log('start counting', this?.countToList)
             if (index > -1) {
@@ -413,6 +509,9 @@ export default {
             }
         },
 
+        /**
+         *  开始执行所有动画效果
+         */
         start() {
             this.log('exec start()...')
             this.startCountTo()
@@ -420,6 +519,9 @@ export default {
             this.updatePercentChildren()
         },
 
+        /**
+         *  debug模式下打印log
+         */
         log(title, msg) {
             if (this.debug) {
                 console.log(`${this.id || 'unknown'} -- `, title, msg)
