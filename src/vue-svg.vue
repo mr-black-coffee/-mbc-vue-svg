@@ -369,6 +369,7 @@ export default {
                     _this.initCountTo()
                     _this.updateClassNames(_this.classNames)
                     _this.updateAttrs()
+                    _this.initCssAnimations()
                     this?.parentNode?.removeChild(this)
                     if (_this.afterRender) {
                         _this.afterRender(svgDom, _this)
@@ -693,6 +694,7 @@ export default {
                     })
                 }
                 // css animation
+                
                 if (animation) {
                     let { name, content, duration = '1s', easing = 'linear', ruleConfig = {
                         selector: name,
@@ -853,9 +855,9 @@ export default {
         /**
          *  debug模式下打印log
          */
-        log(title, msg) {
+        log(title = '', msg = '') {
             if (this.debug) {
-                console.log(`${this.id || 'unknown'} -- `, title, msg)
+                console.log(`${this.id || '-'} : `, title, msg)
             }
         }
     }
