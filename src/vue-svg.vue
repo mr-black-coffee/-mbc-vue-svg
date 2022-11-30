@@ -284,18 +284,18 @@ export default {
                 this.inited && this.updateValue()
             }
         },
-        // percentAnimations: {
-        //     deep: true,
-        //     handler() {
-        //         this.inited && this.updatePercentAnimations()
-        //     }
-        // },
-        // percentChildren: {
-        //     deep: true,
-        //     handler() {
-        //         this.inited && this.updatePercentChildren()
-        //     }
-        // },
+        percentAnimations: {
+            deep: true,
+            handler() {
+                this.inited && this.updatePercentAnimations()
+            }
+        },
+        percentChildren: {
+            deep: true,
+            handler() {
+                this.inited && this.updatePercentChildren()
+            }
+        },
         countTo: {
             deep: true,
             handler() {
