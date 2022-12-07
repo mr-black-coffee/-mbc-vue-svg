@@ -364,24 +364,24 @@ export default {
                 let img = document.createElement('img')
                 img.src = ''
                 img.onerror = function() {
-                    _this.initTextMonitor()
-                    _this.updateValue()
-                    _this.initCountTo()
-                    _this.updateClassNames(_this.classNames)
-                    _this.updateAttrs()
-                    _this.initCssAnimations()
-                    this?.parentNode?.removeChild(this)
-                    if (_this.afterRender) {
-                        _this.afterRender(svgDom, _this)
-                    }
                     setTimeout(() => {
+                        _this.initTextMonitor()
+                        _this.updateValue()
+                        _this.initCountTo()
+                        _this.updateClassNames(_this.classNames)
+                        _this.updateAttrs()
+                        _this.initCssAnimations()
+                        this?.parentNode?.removeChild(this)
+                        if (_this.afterRender) {
+                            _this.afterRender(svgDom, _this)
+                        }
                         _this.resumeDom(_this.svgDom, _this.centerTextSelector)
                         if (_this.autoPlay) {
                             _this.start()
                         }
                         _this.inited = true
                         _this.$emit('inited')
-                    }, 100)
+                    }, 500)
                 }
                 if (!_this.$refs.svgContainer) {
                     return
