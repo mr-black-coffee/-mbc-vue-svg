@@ -365,11 +365,13 @@ export default {
                 img.src = ''
                 img.onerror = function() {
                     setTimeout(() => {
-                        _this.initTextMonitor()
                         _this.updateValue()
-                        _this.initCountTo()
-                        _this.updateClassNames(_this.classNames)
                         _this.updateAttrs()
+                        _this.updateClassNames(_this.classNames)
+                        setTimeout(() => {
+                            _this.initTextMonitor()
+                        }, 100)
+                        _this.initCountTo()
                         _this.initCssAnimations()
                         this?.parentNode?.removeChild(this)
                         if (_this.afterRender) {
