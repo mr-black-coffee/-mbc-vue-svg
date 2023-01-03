@@ -287,13 +287,13 @@ export default {
         percentAnimations: {
             deep: true,
             handler() {
-                this.inited && this.updatePercentAnimations()
+                this.inited && this.initPercentAnimations()
             }
         },
         percentChildren: {
             deep: true,
             handler() {
-                this.inited && this.updatePercentChildren()
+                this.inited && this.initPercentChildren()
             }
         },
         countTo: {
@@ -526,15 +526,14 @@ export default {
             })
         },
 
-
         /**
-         *  按照百分比步进更新animate元素动画(from, to)，如果to是 `percent  total`方式，则修改percent值 
-         * 如果是`end`方式，则修改的是end值
+         * 初始化百分比步进
          */
-        updatePercentAnimations() {
+        initPercentAnimations() {
+            this.percentAnimationList = []
             if (this.svgDom) {
                 this.percentAnimations.forEach(item => {
-                    const {selector, value, duration} = item
+                    const {selector, value} = item
                     const per = value > 1
                         ? value / 100
                         : value
@@ -542,26 +541,69 @@ export default {
                     if (dom) {
                         const to = dom.getAttribute('to')
                         const toArr = to.split(/\s+/)
+                        const toVal = ''
+                        let val
                         if (toArr) {
-                            if (toArr.length === 0) {
-                                dom.setAttribute('to', `${val}`)
-                            } else {
-                                const val = Math.round(per * toArr[1])
-                                dom.setAttribute('to', `${val} ${toArr[1]}`)
+                            if (toArr.length === 2) {
+                                val = Math.round(per * toArr[1])
+                                toVal = `${val} ${toArr[1]}`
+                            } else if (toArr.length === 2) {
+                                try{
+                                    toVal = Math.round(per * toArr[0]) + ''
+                                } catch(e) {
+                                    return
+                                }
                             }
                         }
+                        percentAnimationList.push({
+                            dom,
+                            toVal
+                        })
                     }
                 })
             }
         },
 
         /**
-         *  按照百分比步进更新指定元素的指定元素opacity属性
+         *  按照百分比步进更新animate元素动画(from, to)，如果to是 `percent  total`方式，则修改percent值 
+         * 如果是`end`方式，则修改的是end值
          */
-        updatePercentChildren() {
+        updatePercentAnimations() {
+            // if (this.svgDom) {
+            //     this.percentAnimations.forEach(item => {
+            //         const {selector, value, duration} = item
+            //         const per = value > 1
+            //             ? value / 100
+            //             : value
+            //         const dom = this.svgDom.querySelector(selector)
+            //         if (dom) {
+            //             const to = dom.getAttribute('to')
+            //             const toArr = to.split(/\s+/)
+            //             if (toArr) {
+            //                 if (toArr.length === 0) {
+            //                     dom.setAttribute('to', `${val}`)
+            //                 } else {
+            //                     const val = Math.round(per * toArr[1])
+            //                     dom.setAttribute('to', `${val} ${toArr[1]}`)
+            //                 }
+            //             }
+            //         }
+            //     })
+            // }
+            this.percentAnimationList?.forEach(item => {
+                let { dom, toVal } = item
+                dom.setAttribute('to', toVal)
+            })
+        },
+
+        /**
+         * 初始化百分比配置
+         */
+        initPercentChildren() {
+            this.percentChildrenList = []
             if (this.svgDom) {
-                this.percentChildren.forEach(async (item) => {
-                    const {selector, value, duration = this.duration} = item
+                this.percentChildren.forEach(item => {
+                    const {selector, value, duration} = item
                     const per = value > 1
                         ? value / 100
                         : value
@@ -575,12 +617,27 @@ export default {
                         if (steps > max) {
                             steps = max
                         }
-                        for (let i = 0; i < steps; i++) {
-                            await updateDomOpacity(dom.children[i], duration)
-                        }
+                        this.percentChildrenList.push({
+                            dom,
+                            steps,
+                            duration
+                        })
+                        
                     }
                 })
             }
+        },
+
+        /**
+         *  按照百分比步进更新指定元素的指定元素opacity属性
+         */
+        updatePercentChildren() {
+            this.percentChildrenList?.forEach(async (item) => {
+                let { dom, steps, duration } = item
+                for (let i = 0; i < steps; i++) {
+                    await updateDomOpacity(dom.children?.[i], duration)
+                }
+            })
         },
 
         /**
