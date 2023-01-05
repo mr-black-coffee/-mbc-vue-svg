@@ -18,7 +18,6 @@ import {
     getAttrValueForAnimation,
     getFinderName
 } from 'better-svg/src'
-import M from 'minimatch'
 
 async function updateDomOpacity(dom, duration = 50, val = 1) {
     return new Promise(resolve => {
@@ -235,6 +234,13 @@ export default {
             default: false
         },
         /**
+         * countTo、percentAnimations、percentChildren变化时从上一次动画的结果开始变化
+         */
+        autoContinue: {
+            type: Boolean,
+            default: true
+        },
+        /**
          * id标记，可用于log显示
          */
         id: {
@@ -333,6 +339,12 @@ export default {
             }
         }
     },
+    created() {
+        // 以 selector + 类型 为key
+        this.lastCountTo = {}
+        this.lastPercentAnimation = {}
+        this.lastPercentChildren = {}
+    },
     mounted() {
         this.init()
     },
@@ -372,6 +384,8 @@ export default {
                             _this.initTextMonitor()
                         }, 100)
                         _this.initCountTo()
+                        _this.initPercentAnimations()
+                        _this.initPercentChildren()
                         _this.initCssAnimations()
                         this?.parentNode?.removeChild(this)
                         if (_this.afterRender) {
@@ -539,10 +553,18 @@ export default {
                         : value
                     const dom = this.svgDom.querySelector(selector)
                     if (dom) {
-                        const to = dom.getAttribute('to')
-                        const toArr = to.split(/\s+/)
-                        const toVal = ''
+                        let fromVal = undefined
+                        let to = dom.getAttribute('to')
+                        let toArr = to.split(/\s+/)
+                        let toVal = ''
                         let val
+                        if (this.autoContinue && this.lastPercentAnimation[selector] !== undefined) {
+                            // 获取上次结束的值作为开始值
+                            const from = dom.getAttribute('from')
+                            const fromArr = from.split(/\s+/)
+                            fromArr[0] = this.lastPercentAnimation[selector]
+                            fromVal = fromArr.join(' ')
+                        }
                         if (toArr) {
                             if (toArr.length === 2) {
                                 val = Math.round(per * toArr[1])
@@ -555,13 +577,16 @@ export default {
                                 }
                             }
                         }
-                        percentAnimationList.push({
+                        this.percentAnimationList.push({
+                            selector,
                             dom,
-                            toVal
+                            fromVal,
+                            toVal,
                         })
                     }
                 })
             }
+            this.updatePercentAnimations()
         },
 
         /**
@@ -591,8 +616,10 @@ export default {
             //     })
             // }
             this.percentAnimationList?.forEach(item => {
-                let { dom, toVal } = item
-                dom.setAttribute('to', toVal)
+                let { selector, dom, fromVal, toVal } = item
+                fromVal && dom.setAttribute('from', fromVal)
+                toVal && dom.setAttribute('to', toVal)
+                this.lastPercentAnimation[selector] = toVal.split(/\s+/)[0]
             })
         },
 
@@ -603,7 +630,7 @@ export default {
             this.percentChildrenList = []
             if (this.svgDom) {
                 this.percentChildren.forEach(item => {
-                    const {selector, value, duration} = item
+                    let {selector, value, duration, emptyOpacity, fullOpacity = 1} = item
                     const per = value > 1
                         ? value / 100
                         : value
@@ -617,10 +644,21 @@ export default {
                         if (steps > max) {
                             steps = max
                         }
+                        // 未达到的元素的opacity
+                        if (!emptyOpacity) {
+                            // 尝试从dom中读取
+                            let tempOpcaity = dom.getAttribute('opacity')
+                            emptyOpacity = tempOpcaity
+                                ? +tempOpcaity
+                                : 0.3
+                        }
                         this.percentChildrenList.push({
+                            selector,
                             dom,
                             steps,
-                            duration
+                            duration,
+                            emptyOpacity,
+                            fullOpacity
                         })
                         
                     }
@@ -633,9 +671,25 @@ export default {
          */
         updatePercentChildren() {
             this.percentChildrenList?.forEach(async (item) => {
-                let { dom, steps, duration } = item
-                for (let i = 0; i < steps; i++) {
-                    await updateDomOpacity(dom.children?.[i], duration)
+                let { selector, dom, steps, duration, emptyOpacity, fullOpacity} = item
+                let start = this.autoContinue
+                    ? this.lastPercentChildren[selector] || 0
+                    : 0
+                this.log('start percentChildren: ' + start)
+                if (start < steps) {
+                    // 从 start 加亮到 steps
+                    for (let i = start; i < steps; i++) {
+                        await updateDomOpacity(dom.children?.[i], duration, fullOpacity)
+                    }
+                } else {
+                    // 从 steps 变暗到 start
+                    for (let i = start - 1; i >= steps; i--) {
+                        await updateDomOpacity(dom.children?.[i], duration, emptyOpacity)
+                    }
+                }
+                // 记录最后一次显示到子元素
+                if (this.autoContinue) {
+                    this.lastPercentChildren[selector] = steps
                 }
             })
         },
@@ -881,6 +935,13 @@ export default {
                         c.duration = this.duration
                     }
                     this.log('added new countTo', c)
+                    // 自动从上次翻牌的结束数字开始
+                    if (this.autoContinue && this.lastCountTo[c._selector] !== undefined && !isNaN(this.lastCountTo[c._selector])) {
+                        if (this.lastCountTo[c._selector] !== undefined && !isNaN(this.lastCountTo[c._selector])) {
+                            this.log('start from last value: ' + this.lastCountTo[c._selector])
+                            c.start = this.lastCountTo[c._selector]
+                        }
+                    }
                     this.countToList.push(new CountTo(c, this.svgDom))
                 })
             }
@@ -896,7 +957,13 @@ export default {
                 c && c.start()
             } else {
                 this.log('countToList', this.countToList)
-                this.countToList && this.countToList.forEach(c => c.start())
+                this.countToList && this.countToList.forEach(c => {
+                    c.start()
+                    // 记录最后一次翻牌值
+                    if (this.autoContinue) {
+                        this.lastCountTo[c._selector] = c._end
+                    }
+                })
             }
         },
 
